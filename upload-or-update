@@ -1,0 +1,33 @@
+#!/usr/bin/python -u
+
+
+from __future__ import print_function
+import sys
+
+import upload
+
+user = sys.argv[1]
+log_path = sys.argv[2]
+done_path = sys.argv[3]
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
+with open(log_path, 'a', 1) as log:
+    with open(done_path, 'a', 1) as done:
+        while True:
+            fpath = sys.stdin.readline()
+            if fpath == '':
+                # No more lines
+                exit(0)
+            log.write('updating: ' + fpath)
+            try:
+                photo_id = upload.update_with_hash(fpath.strip(), user)
+                log.write('  photo_id: ' + photo_id + '\n')
+                # Output the file name after successfully handling it
+                # so that it can be recorded as done.
+                done.write(fpath)
+            except Exception as e:
+                log.write('Exception: ' + str(e.message))
