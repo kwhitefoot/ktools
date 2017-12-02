@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# Enumerate changed files forever to standard out.
+
+set -x
+set -e
+
+
+root="$1"
+
+state="$2"
+
+log_file="${state}/log"
+
+# Make sure that the state directory exists
+mkdir -p "${state}"
+
+function log {
+    echo "$1" >> "${log_file}"
+}
+
+log "Starting $0"
+log "$(date)"
+
+
+todo="${state}/todo"
+todo_tmp="${state}/todo_tmp"
+done="${state}/done"
+started="${state}/started"
+started_new="${state}/started_new"
+recent="${state}/recent"
+
+# Get the recently changed files most recent change first.
+function get_recent {
+    log "Getting recently changed files"
+    find "$root" -type f -newer "$started" -printf "%T@:%p\n" | sort -n | cut -d: -f2- > "$recent"
+    log "Got recently changed"
+}
+
+
+# First clean up the todo file
+touch "${todo}"
+touch "${done}"
+
+log "Sorting the to do list"
+# Remove done from todo and add recent.
+sort -u -o "$todo" "$todo"
+sort -u -o "$done" "$done"
+
+comm -2 -3 "$todo" "$done" > "$todo_tmp"
+rm "$done"
+
+
+# Record start time
+touch "${started_new}"
+
+# Put recently changed files at the top of the list, most recently
+# changed first
+if [ ! -f "$started" ]
+then
+    # Set the last started time to zero
+    touch -d @0 "${started}"
+fi
+
+get_recent
+
+# Finally create todo from recent and todo_tmp with the most recently
+# changed first.
+log "    Recent: $recent"
+log "To do temp: $todo_tmp"
+log "     To do: $todo"
+cat "$recent" "$todo_tmp" > "$todo"
+
+# Now read it line by line
+while read line
+do
+    if file "$line" | grep --quiet ": JPEG image data"
+    then
+	echo "${line}"
+	sleep 10s # don't hammer Flickr.
+    else
+	# Not a picture so just say that it is done.
+	echo "${line}" >> "${done}"
+    fi
+done < "${todo}"
+
+# Now update the start time
+touch -r "${started_new}" "${started}"
+
+log "Finished: at $(date --iso-8601=seconds)"
+exit 0
