@@ -22,7 +22,7 @@ with open(log_path, 'a', 1) as log:
             if fpath == '':
                 # No more lines
                 exit(0)
-            log.write('updating: ' + fpath)
+            log.write('Trying update or upload: ' + fpath)
             try:
                 photo_id = upload.update_with_hash(fpath.strip(), user)
                 log.write('  photo_id: ' + photo_id + '\n')
