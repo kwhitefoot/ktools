@@ -43,6 +43,7 @@ def upload(filename,
 def upload_with_hash(filename,
                      username,
                      **kwargs):
+    print('upload_with_hash')
     assert type(filename) is StringType
     assert type(username) is StringType
     imagesha512 = checksum.checksum(filename)
